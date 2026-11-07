@@ -1,0 +1,81 @@
+extends Node2D
+
+var sprite: Sprite2D
+var view
+var v=Vector2(0,0)
+var x_min
+var x_max
+var y_min
+var y_max
+var rotate_speed=2
+var cam: Camera2D
+var zoom_time = 1.1
+var r_max=2*Vector2(1,1) #zoom in
+var r_min=1*Vector2(1,1) #zoomm out
+
+func _ready() -> void:
+	print(000333)
+	#get_node("Camera2D").tt()
+	set_process(false)
+	view=get_viewport_rect()
+	x_min=view.size.x*0.1
+	x_max=view.size.x*0.9
+	y_min=view.size.y*0.1
+	y_max=view.size.y*0.9
+	sprite=Sprite2D.new()
+	sprite.texture = preload("res://zw.png")
+	add_child(sprite)
+	sprite.position=view.get_center()
+	var ori_x=sprite.texture.get_width()
+	sprite.scale=Vector2(1,1)*0.2*view.size.x/ori_x
+	
+	cam=Camera2D.new()
+	add_child(cam)
+	cam.position=view.get_center()
+	cam.make_current()
+	cam.zoom=Vector2(2,2)
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	var gyro = Input.get_gyroscope()
+	var acce=Input.get_accelerometer()
+	var dif=get_local_mouse_position()-sprite.position
+	var a=Vector2(0,100)+dif
+	v+=a*delta
+	sprite.rotation+=gyro.z*delta
+	sprite.position+=v*delta#0.1*view.size.x*Vector2(gyro.y,gyro.x)*delta
+	if sprite.position.x<x_min:
+		sprite.position.x=x_min
+		v=Vector2(-v.x,v.y)
+	if sprite.position.y<y_min:
+		sprite.position.y=y_min
+		v=Vector2(v.x,-v.y)
+	if sprite.position.x>x_max:
+		sprite.position.x=x_max
+		v=Vector2(-v.x,v.y)
+	if sprite.position.y>y_max:
+		sprite.position.y=y_max
+		v=Vector2(v.x,-v.y)
+
+func re() -> void:
+	sprite.position=view.get_center()
+
+func _input(event) -> void:
+	if event is InputEventMouseButton and event.is_pressed():
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			re()
+		'''
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			cam.zoom *= zoom_time
+			if cam.zoom > r_max:
+				cam.zoom = r_max
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			cam.zoom /= zoom_time
+			if cam.zoom < r_min:
+				cam.zoom = r_min
+		'''
+
+
+func _draw() -> void:
+	draw_rect(view,Color(1,1,1),true)
